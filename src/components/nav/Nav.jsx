@@ -4,8 +4,11 @@ import Logo from "../../assets/images/navlogo.svg";
 import Search from "../../assets/images/search.svg";
 import User from "../../assets/images/user.svg";
 import Cart from "../../assets/images/cart.svg";
+import { useCart } from "../pages/cart/CartContext";
 
 const Nav = () => {
+  const { cartItemCount } = useCart();
+
   return (
     <div className="w-[90%] flex items-center justify-center h-[108px] border-b-2 border-[none] border-solid mx-auto my-0 ">
       <div className="w-[95%] flex items-center justify-between h-[30px]">
@@ -33,20 +36,25 @@ const Nav = () => {
             About
           </li>
         </ul>
-        <ul className="w-[10%] h-[100%] flex items-center justify-between">
+        <ul className="w-[10%] h-[100%] flex items-center justify-between relative">
           <li>
             <img className="w-[18px] h-[18px]" src={Search} alt="search" />
           </li>
           <li>
             <img className="w-[18px] h-[18px]" src={User} alt="user" />
           </li>
-          <li>
+          <li className="relative">
             <Link to="/cart">
               <img
                 className="w-[18px] h-[18px] cursor-pointer"
                 src={Cart}
                 alt="cart"
               />
+              {cartItemCount > 0 && (
+                <span className="absolute top-[-10px] right-[-10px] bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                  {cartItemCount}
+                </span>
+              )}
             </Link>
           </li>
         </ul>

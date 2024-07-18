@@ -1,15 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import cartIcon from "../../../assets/images/button-cart.svg";
-import { useBrands } from "../../brands/Brands";
 import { useProducts } from "../../use_products/Use_Products";
 import { Link } from "react-router-dom";
+import { useCart } from "../../pages/cart/CartContext"; 
 
 const Products = () => {
   const { products, filterByBrand, setProducts, originalProducts } =
     useProducts();
   const [sortedByPrice, setSortedByPrice] = useState(false);
+  const [brands, setBrands] = useState([]);
+  const [colors, setColors] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState(null);
-  const brands = useBrands();
+  const [selectedColor, setSelectedColor] = useState(null);
+  const { addToCart } = useCart(); 
+
+  useEffect(() => {
+    const fetchBrandsAndColors = async () => {
+      try {
+        const brandsResponse = await axios.get(
+          "https://headphones-server.onrender.com/brands"
+        );
+        setBrands(brandsResponse.data);
+
+        const colorsResponse = await axios.get(
+          "https://headphones-server.onrender.com/colors"
+        );
+        setColors(colorsResponse.data);
+      } catch (error) {
+        console.error("Error fetching brands and colors:", error);
+      }
+    };
+
+    fetchBrandsAndColors();
+  }, []);
 
   const sortByPrice = () => {
     if (sortedByPrice) {
@@ -21,16 +45,30 @@ const Products = () => {
     setSortedByPrice(!sortedByPrice);
   };
 
-  const handleBrandChange = (brand) => {
-    const newSelectedBrand = selectedBrand === brand ? null : brand;
-    setSelectedBrand(newSelectedBrand);
-    filterByBrand(newSelectedBrand);
-  };
-
   const resetFilters = () => {
     setSelectedBrand(null);
-    filterByBrand(null);
+    setSelectedColor(null);
+    setProducts(originalProducts);
   };
+
+  const filterProducts = () => {
+    let filteredProducts = originalProducts;
+    if (selectedBrand) {
+      filteredProducts = filteredProducts.filter(
+        (product) => product.brand === selectedBrand
+      );
+    }
+    if (selectedColor) {
+      filteredProducts = filteredProducts.filter((product) =>
+        product.color_options.includes(selectedColor)
+      );
+    }
+    setProducts(filteredProducts);
+  };
+
+  useEffect(() => {
+    filterProducts();
+  }, [selectedBrand, selectedColor]);
 
   return (
     <div className="w-[100%] mt-[65px] h-auto flex flex-col items-center justify-center">
@@ -50,27 +88,46 @@ const Products = () => {
 
       <div className="w-[100%] h-auto flex flex-row">
         <div className="mt-[65px] w-[300px] h-auto">
-          <div className="w-[80%] h-[340px] mx-auto my-0 pl-[5px] border-t-2 border-dashed border-[#464444cc]">
+          <div className="w-[80%] h-auto mx-auto my-0 pl-[5px] border-t-2 border-dashed border-[#464444cc]">
             <h2 className="text-lg font-bold mb-2 mt-[15px]">BRAND</h2>
-            <ul className="list-none p-0">
-              {brands.map((brand_name, index) => (
-                <li key={index} className="mb-2 flex items-center">
-                  <input
-                    type="checkbox"
-                    id={brand_name}
-                    className="mr-3 w-[18px] h-[18px] border-2 border-solid border-[rgba(11,164,45,1)]"
-                    checked={selectedBrand === brand_name}
-                    onChange={() => handleBrandChange(brand_name)}
-                  />
-                  <label
-                    htmlFor={brand_name}
-                    className="text-[rgba(25,13,38,1)] text-lg font-normal"
+            <ul>
+              {brands.map((brand) => (
+                <li key={brand.id}>
+                  <button
+                    onClick={() => setSelectedBrand(brand.name)}
+                    className={`${
+                      selectedBrand === brand.name ? "font-bold" : ""
+                    }`}
                   >
-                    {brand_name}
-                  </label>
+                    {brand.name}
+                  </button>
                 </li>
               ))}
             </ul>
+
+            <h2 className="text-lg font-bold mb-2 mt-[15px] border-t-2 pb-[5px] border-dashed pt-[10px] border-[#464444cc]">
+              COLOR
+            </h2>
+            <ul className="grid grid-cols-5 gap-2">
+              {colors.map((color) => (
+                <li key={color}>
+                  <button
+                    onClick={() => setSelectedColor(color)}
+                    className={`${
+                      selectedColor === color
+                        ? "border-2 rounded-[50%] h-[83%] border-black"
+                        : ""
+                    }`}
+                  >
+                    <span
+                      className="w-6 h-6 inline-block rounded-full"
+                      style={{ backgroundColor: color }}
+                    ></span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+
             <button
               onClick={resetFilters}
               className="bg-[rgba(11,164,45,1)] text-white font-bold py-2 px-4 rounded mt-4"
@@ -115,10 +172,14 @@ const Products = () => {
                       ></div>
                     ))}
                   </div>
+
                   <span className="text-lg font-bold">${product.price}</span>
                 </div>
                 <div className="mt-auto">
-                  <button className="bg-[rgba(11,164,45,1)] text-white font-bold py-2 px-4 rounded flex items-center">
+                  <button
+                    className="bg-[rgba(11,164,45,1)] text-white font-bold py-2 px-4 rounded flex items-center"
+                    onClick={() => addToCart(product)}
+                  >
                     <img src={cartIcon} alt="Cart" className="w-4 h-4 mr-2" />
                     Add to Cart
                   </button>
