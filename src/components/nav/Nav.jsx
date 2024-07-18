@@ -11,7 +11,9 @@ const Nav = () => {
       <div className="w-[95%] flex items-center justify-between h-[30px]">
         <ul className="flex items-center justify-between w-[19%] h-[100%]">
           <li>
-            <img src={Logo} alt="logo" />
+            <a href="/">
+              <img src={Logo} alt="logo" />
+            </a>
           </li>
         </ul>
         <ul className="w-[47%] h-[100%] flex items-center justify-between ">

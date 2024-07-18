@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 export const useBrands = () => {
-  const [Brands, setBrands] = useState([]);
+  const [Brand_Name, setBrands] = useState([]);
 
   useEffect(() => {
     fetch("https://headphones-server.onrender.com/brands")
@@ -10,7 +10,5 @@ export const useBrands = () => {
       .catch((error) => console.error("Error fetching brands:", error));
   }, []);
 
-  return Brands;
+  return Brand_Name;
 };
-
-
