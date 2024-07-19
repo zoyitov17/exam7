@@ -3,17 +3,19 @@ import axios from "axios";
 import cartIcon from "../../../assets/images/button-cart.svg";
 import { useProducts } from "../../use_products/Use_Products";
 import { Link } from "react-router-dom";
-import { useCart } from "../../pages/cart/CartContext"; 
+import { useCart } from "../../pages/cart/CartContext";
+import { filterProducts } from "../../filter/Filter";
+import { sortProducts } from "../../sort/Sort";
+import { resetFilters } from "../../reset/Reset";
 
 const Products = () => {
-  const { products, filterByBrand, setProducts, originalProducts } =
-    useProducts();
+  const { products, setProducts, originalProducts } = useProducts();
   const [sortedByPrice, setSortedByPrice] = useState(false);
   const [brands, setBrands] = useState([]);
   const [colors, setColors] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
-  const { addToCart } = useCart(); 
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchBrandsAndColors = async () => {
@@ -35,39 +37,28 @@ const Products = () => {
     fetchBrandsAndColors();
   }, []);
 
-  const sortByPrice = () => {
-    if (sortedByPrice) {
-      setProducts(originalProducts);
-    } else {
-      const sortedProducts = [...products].sort((a, b) => a.price - b.price);
-      setProducts(sortedProducts);
-    }
+  const handleSortByPrice = () => {
+    const sortedProducts = sortProducts(products, !sortedByPrice);
+    setProducts(sortedProducts);
     setSortedByPrice(!sortedByPrice);
   };
 
-  const resetFilters = () => {
-    setSelectedBrand(null);
-    setSelectedColor(null);
-    setProducts(originalProducts);
-  };
-
-  const filterProducts = () => {
-    let filteredProducts = originalProducts;
-    if (selectedBrand) {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.brand === selectedBrand
-      );
-    }
-    if (selectedColor) {
-      filteredProducts = filteredProducts.filter((product) =>
-        product.color_options.includes(selectedColor)
-      );
-    }
-    setProducts(filteredProducts);
+  const handleResetFilters = () => {
+    resetFilters(
+      setSelectedBrand,
+      setSelectedColor,
+      setProducts,
+      originalProducts
+    );
   };
 
   useEffect(() => {
-    filterProducts();
+    const filteredProducts = filterProducts(
+      originalProducts,
+      selectedBrand,
+      selectedColor
+    );
+    setProducts(filteredProducts);
   }, [selectedBrand, selectedColor]);
 
   return (
@@ -79,7 +70,7 @@ const Products = () => {
           </li>
           <li
             className="text-xl font-medium leading-[30px] text-center text-[rgba(11,164,45,1)] cursor-pointer"
-            onClick={sortByPrice}
+            onClick={handleSortByPrice}
           >
             Sort By Price
           </li>
@@ -92,15 +83,17 @@ const Products = () => {
             <h2 className="text-lg font-bold mb-2 mt-[15px]">BRAND</h2>
             <ul>
               {brands.map((brand) => (
-                <li key={brand.id}>
-                  <button
-                    onClick={() => setSelectedBrand(brand.name)}
-                    className={`${
-                      selectedBrand === brand.name ? "font-bold" : ""
-                    }`}
-                  >
-                    {brand.name}
-                  </button>
+                <li key={brand}>
+                  <input
+                    type="radio"
+                    value={brand}
+                    name="brand"
+                    id={brand}
+                    checked={selectedBrand === brand}
+                    onChange={(e) => setSelectedBrand(e.target.value)}
+                    className=" form-radio h-5 w-5 text-[rgba(11,164,45,1)] border-gray-300 focus:ring-[rgba(11,164,45,1)]"
+                  />
+                  <label htmlFor={brand} className="ml-2 text-lg text-gray-700">{brand}</label>
                 </li>
               ))}
             </ul>
@@ -129,7 +122,7 @@ const Products = () => {
             </ul>
 
             <button
-              onClick={resetFilters}
+              onClick={handleResetFilters}
               className="bg-[rgba(11,164,45,1)] text-white font-bold py-2 px-4 rounded mt-4"
             >
               Reset
@@ -172,7 +165,6 @@ const Products = () => {
                       ></div>
                     ))}
                   </div>
-
                   <span className="text-lg font-bold">${product.price}</span>
                 </div>
                 <div className="mt-auto">
